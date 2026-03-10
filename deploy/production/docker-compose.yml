@@ -1,0 +1,130 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: habit_db
+      POSTGRES_USER: habit_user
+      POSTGRES_PASSWORD: change-this-secure-password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - habit_network
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - habit_network
+    restart: always
+
+  # 前台用户 API 服务
+  api:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    command: gunicorn habit_project.wsgi:application --bind 0.0.0.0:8000 --workers 2
+    env_file:
+      - ./backend.env
+    volumes:
+      - ../../backend:/app
+      - logs_api:/app/logs
+      - media_files:/app/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - habit_network
+    restart: always
+
+  # 后台管理系统 API 服务
+  admin_api:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    command: gunicorn habit_project.wsgi:application --bind 0.0.0.0:8001 --workers 2
+    env_file:
+      - ./backend.env
+    environment:
+      - API_TYPE=admin
+    volumes:
+      - ../../backend:/app
+      - logs_admin:/app/logs
+      - media_files:/app/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - habit_network
+    restart: always
+
+  # 前台用户网站
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend.env
+    volumes:
+      - ./dist:/app/dist
+    networks:
+      - habit_network
+    restart: always
+
+  # 后台管理系统网站
+  admin_frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend.env
+    environment:
+      - VITE_ADMIN_MODE=true
+    volumes:
+      - ./dist:/app/dist
+    networks:
+      - habit_network
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    depends_on:
+      - api
+      - admin_api
+      - frontend
+      - admin_frontend
+    networks:
+      - habit_network
+    restart: always
+
+  # 邮件发送服务
+  mail-queue:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    command: python manage.py send_emails
+    env_file:
+      - ./backend.env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - habit_network
+    restart: always
+
+volumes:
+  postgres_data:
+  logs:
+  nginx_logs:
+  static_files:
+  media_files:
+
+networks:
+  habit_network:
+    driver: bridge
