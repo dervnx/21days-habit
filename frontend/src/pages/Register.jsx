@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Mail, Lock, User, Captcha, CheckCircle } from 'lucide-react'
+import { Mail, Lock, User, Shield, CheckCircle } from 'lucide-react'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -157,7 +157,7 @@ export default function Register() {
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Captcha className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Shield className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={captchaCode}
