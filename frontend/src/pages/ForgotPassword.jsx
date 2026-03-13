@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api, { encryptPassword } from '../services/api'
-import { Mail, Captcha, ArrowLeft } from 'lucide-react'
+import { Mail, Shield, ArrowLeft } from 'lucide-react'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -110,7 +110,7 @@ export default function ForgotPassword() {
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Captcha className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Shield className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={captchaCode}
